@@ -1,4 +1,5 @@
 import graphene
+from graphql import GraphQLError
 from graphene_django import DjangoObjectType
 from books.models import Book, Publisher, Author
 
@@ -33,6 +34,11 @@ class Query(graphene.ObjectType):
         return Author.objects.all()
 
 
+"""
+Publisher CRUD Methods
+"""
+
+
 class CreatePublisherMutation(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
@@ -63,6 +69,75 @@ class CreatePublisherMutation(graphene.Mutation):
         return CreatePublisherMutation(publisher=publisher)
 
 
+class UpdatePublisherMutation(graphene.Mutation):
+    publisherID = graphene.ID(required=True)
+    name = graphene.String(required=True)
+    address = graphene.String(required=True)
+    city = graphene.String(required=True)
+    stateProvince = graphene.String(required=True)
+    country = graphene.String(required=True)
+    website = graphene.String(required=True)  # Can be modified into custom Scalar Type
+
+    publisher = graphene.Field(PublisherType)
+
+    def mutate(
+        self,
+        info,
+        publisherID,
+        name,
+        address,
+        city,
+        stateProvince,
+        country,
+        website,
+    ):
+        try:
+            publisher = Publisher.objects.get(
+                pk=publisherID
+            )  # Check if Publisher Exists
+        except Publisher.DoesNotExist:
+            raise GraphQLError(f"Book with id {publisherID} does not exist")
+
+        if name:
+            publisher.name = name
+        if address:
+            publisher.address = address
+        if city:
+            publisher.city = city
+        if stateProvince:
+            publisher.state_province = stateProvince
+        if country:
+            publisher.country = country
+        if website:
+            publisher.website = website
+
+        publisher.save()
+        return UpdatePublisherMutation(publisher=publisher)
+
+
+class DeletePublisherMutation(graphene.Mutation):
+    class Arguments:
+        publisherID = graphene.ID(required=True)
+
+    publisherID = graphene.ID()
+
+    def mutate(self, info, publisherID):
+        try:
+            publisher = Publisher.objects.get(
+                pk=publisherID
+            )  # Check if Publisher Exists
+        except Publisher.DoesNotExist:
+            raise GraphQLError(f"Publisher with id {publisherID} does not exist")
+
+        publisher.delete()
+        return DeletePublisherMutation(publisherID=publisherID)
+
+
+"""
+Author CRUD Methods
+"""
+
+
 class CreateAuthorMutation(graphene.Mutation):
     class Arguments:
         firstName = graphene.String(required=True)
@@ -82,6 +157,52 @@ class CreateAuthorMutation(graphene.Mutation):
 
         author.save()
         return CreateAuthorMutation(author=author)
+
+
+class UpdateAuthorMutation(graphene.Mutation):
+    authorID = graphene.ID(required=True)
+    firstName = graphene.String(required=True)
+    lastName = graphene.String(required=True)
+    email = graphene.String(required=True)  # Can be modified into custom Scalar Type
+
+    author = graphene.Field(PublisherType)
+
+    def mutate(self, info, authorID, firstName, lastName, email):
+        try:
+            author = Author.objects.get(pk=authorID)  # Check if Publisher Exists
+        except Author.DoesNotExist:
+            raise GraphQLError(f"Book with id {authorID} does not exist")
+
+        if firstName:
+            author.first_name = firstName
+        if lastName:
+            author.last_name = lastName
+        if email:
+            author.email = email
+
+        author.save()
+        return UpdateAuthorMutation(author=author)
+
+
+class DeleteAuthorMutation(graphene.Mutation):
+    class Arguments:
+        authorID = graphene.ID(required=True)
+
+    authorID = graphene.ID()
+
+    def mutate(self, info, authorID):
+        try:
+            author = Author.objects.get(pk=authorID)  # Check if Publisher Exists
+        except Publisher.DoesNotExist:
+            raise GraphQLError(f"Author with id {authorID} does not exist")
+
+        author.delete()
+        return DeleteAuthorMutation(authorID=authorID)
+
+
+"""
+Book CRUD Methods
+"""
 
 
 class CreateBookMutation(graphene.Mutation):
@@ -109,10 +230,72 @@ class CreateBookMutation(graphene.Mutation):
         return CreateBookMutation(book=book)
 
 
+class UpdateBookMutation(graphene.Mutation):
+    bookID = graphene.ID(required=True)
+    title = graphene.String(required=True)
+    authorID = graphene.Int(required=True)
+    publisherID = graphene.Int(required=True)
+    publicationDate = graphene.Date(required=True)
+
+    book = graphene.Field(PublisherType)
+
+    def mutate(self, info, bookID, title, authorID, publisherID, publicationDate):
+        try:
+            book = Book.objects.get(pk=bookID)  # Check if Publisher Exists
+        except Book.DoesNotExist:
+            raise GraphQLError(f"Book with id {bookID} does not exist")
+
+        if title:
+            book.title = title
+        if authorID:
+            try:
+                author = Author.objects.get(pk=authorID)
+            except Book.DoesNotExist:
+                raise GraphQLError(
+                    f"Book with author that has id {authorID} does not exist"
+                )
+            book.authors = [author]
+        if publisherID:
+            try:
+                publisher = Publisher.objects.get(pk=publisherID)
+            except Publisher.DoesNotExist:
+                raise GraphQLError(
+                    f"Book with publisher that has id {publisherID} does not exist"
+                )
+        if publicationDate:
+            book.publication_date = publicationDate
+
+        book.save()
+        return UpdateBookMutation(book=book)
+
+
+class DeleteBookMutation(graphene.Mutation):
+    class Arguments:
+        bookID = graphene.ID(required=True)
+
+    bookID = graphene.ID()
+
+    def mutate(self, info, bookID):
+        try:
+            book = Book.objects.get(pk=bookID)  # Check if Publisher Exists
+        except Publisher.DoesNotExist:
+            raise GraphQLError(f"book with id {bookID} does not exist")
+
+        book.delete()
+        return DeleteBookMutation(bookID=bookID)
+
+
+# Mutation Class
 class Mutation(graphene.ObjectType):
     createPublisher = CreatePublisherMutation.Field()
     createAuthor = CreateAuthorMutation.Field()
     createBook = CreateBookMutation.Field()
+    updatePublisher = UpdatePublisherMutation.Field()
+    updateAuthor = UpdateAuthorMutation.Field()
+    updateBook = UpdateBookMutation.Field()
+    deletePublisher = DeletePublisherMutation.Field()
+    deleteAuthor = DeleteAuthorMutation.Field()
+    deletBook = DeleteBookMutation.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
