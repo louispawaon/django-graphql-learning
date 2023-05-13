@@ -15,7 +15,7 @@ class BookAdmin(admin.ModelAdmin):
 
 class AuthorAdmin(admin.ModelAdmin):
     fieldsets = [
-        (None, {"fields": ["first_name", "last_name", "user"]}),
+        (None, {"fields": ["first_name", "last_name"]}),
         ("e-mail", {"fields": ["email"]}),
     ]
     search_fields = ["first_name", "last_name"]
