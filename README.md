@@ -37,3 +37,32 @@ I will attempt to recreate the [library/bookstore app]((https://github.com/louis
   ```
 
 **Optional**: Run `poetry install` after installing Poetry to install the dependencies, if you plan to clone my repository
+
+# ***Chores***
+- [x] Initialize Models
+  - [x] Books
+  - [x] Publishers
+  - [x] Authors
+- [x] Necessary Migrations
+- [x] Initialize Graphene-Django
+  - [x] Necessary Graphene-Django Imports
+  - [x] Necessary GraphQL Imports
+  - [x] Necessary Graphene Imports
+  - [x] Add `graphene_django` in `settings.py`
+- [x] GraphQL Schema
+  - [x] Initialize `schema.py`
+  - [x] Create `DjangoObjectType` for the models
+  - [x] Create `Query` 
+  - [x] Create different mutations for CRUD Operations
+    - [x] Add
+      - [x] Publisher
+      - [x] Book 
+      - [x] Author
+    - [x] Update
+      - [x] Publisher
+      - [x] Book 
+      - [x] Author
+    - [x] Delete
+      - [x] Publisher
+      - [x] Book 
+      - [x] Author 
