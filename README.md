@@ -25,6 +25,11 @@ I will attempt to recreate the [library/bookstore app]((https://github.com/louis
   poetry add graphene-django
   pip install graphene-django
   ```
+- **Requests**
+  ```
+  poetry add requests
+  pip install requests
+  ```
 - **Black** (Optional)
   ```
   poetry add black
