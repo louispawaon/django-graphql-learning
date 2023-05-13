@@ -263,7 +263,9 @@ class UpdateBookMutation(graphene.Mutation):
                     f"Book with publisher that has id {publisherID} does not exist"
                 )
         if publicationDate:
-            book.publication_date = publicationDate
+            book.publication_date = (
+                publicationDate  # Can be checked if date given is valid
+            )
 
         book.save()
         return UpdateBookMutation(book=book)
