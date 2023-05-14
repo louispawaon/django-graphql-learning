@@ -1,7 +1,82 @@
 import graphene
+import re
 from graphql import GraphQLError
 from graphene_django import DjangoObjectType
 from books.models import Book, Publisher, Author
+
+"""
+Custom Scalar Types 
+"""
+
+
+# Website Custom Scalar Type
+class Website(graphene.Scalar):
+    website_pattern = re.compile(
+        r"^((http|https)://)[-a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)$"
+    )
+
+    @staticmethod
+    def serialize(
+        value,
+    ):  # Converting the Scalar Value to a Serialized Value to be sent in network
+        if not Website.is_valid(value):
+            raise ValueError(f"Invalid Website URL: {value}")
+        return value
+
+    @staticmethod
+    def parse_literal(
+        node,
+    ):  # Converting the literal value from GraphQL query to Python object
+        if not Website.is_valid(node.value):
+            raise GraphQLError(f"Invalid Website URL: {node.value}")
+        return node.value
+
+    @staticmethod
+    def parse_value(
+        value,
+    ):  # Converting runtime value to scalar type expected by the schema
+        if not Website.is_valid(value):
+            raise ValueError(f"Invalid Webiste URL: {value}")
+        return value
+
+    @staticmethod
+    def is_valid(value):
+        return isinstance(value, str) and Website.website_pattern.match(value)
+
+
+# Email Custom Scalar Type
+class Email(graphene.Scalar):
+    email_pattern = re.compile(
+        r"([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+"
+    )
+
+    @staticmethod
+    def serialize(
+        value,
+    ):  # Converting the Scalar Value to a Serialized Value to be sent in network
+        if not Email.is_valid(value):
+            raise ValueError(f"Invalid Email Address: {value}")
+        return value
+
+    @staticmethod
+    def parse_literal(
+        node,
+    ):  # Converting the literal value from GraphQL query to Python object
+        if not Email.is_valid(node.value):
+            raise GraphQLError(f"Invalid Email Address: {node.value}")
+        return node.value
+
+    @staticmethod
+    def parse_value(
+        value,
+    ):  # Converting runtime value to scalar type expected by the schema
+        if not Email.is_valid(value):
+            raise ValueError(f"Invalid Email Address: {value}")
+        return value
+
+    @staticmethod
+    def is_valid(value):
+        return isinstance(value, str) and Email.email_pattern.match(value)
 
 
 class BookType(DjangoObjectType):
@@ -46,9 +121,7 @@ class CreatePublisherMutation(graphene.Mutation):
         city = graphene.String(required=True)
         stateProvince = graphene.String(required=True)
         country = graphene.String(required=True)
-        website = graphene.String(
-            required=True
-        )  # Can be modified into custom Scalar Type
+        website = Website(required=True)
 
     publisher = graphene.Field(PublisherType)
 
@@ -76,7 +149,7 @@ class UpdatePublisherMutation(graphene.Mutation):
     city = graphene.String(required=True)
     stateProvince = graphene.String(required=True)
     country = graphene.String(required=True)
-    website = graphene.String(required=True)  # Can be modified into custom Scalar Type
+    website = Website(required=True)
 
     publisher = graphene.Field(PublisherType)
 
@@ -142,9 +215,7 @@ class CreateAuthorMutation(graphene.Mutation):
     class Arguments:
         firstName = graphene.String(required=True)
         lastName = graphene.String(required=True)
-        email = graphene.String(
-            required=True
-        )  # Can be modified into custom Scalar Type
+        email = Email(required=True)
 
     author = graphene.Field(AuthorType)
 
@@ -163,7 +234,7 @@ class UpdateAuthorMutation(graphene.Mutation):
     authorID = graphene.ID(required=True)
     firstName = graphene.String(required=True)
     lastName = graphene.String(required=True)
-    email = graphene.String(required=True)  # Can be modified into custom Scalar Type
+    email = Email(required=True)
 
     author = graphene.Field(PublisherType)
 
