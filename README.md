@@ -66,3 +66,8 @@ I will attempt to recreate the [library/bookstore app]((https://github.com/louis
       - [x] Publisher
       - [x] Book 
       - [x] Author 
+  - [x] Create Custom Scalar Types using Regex
+    - [x] Website Custom Scalar Type
+    - [x] Email Custom Scalar Type
+  - [x] Create logic for Duplicate Checking
+  - [x] Add Basic Search Functionality

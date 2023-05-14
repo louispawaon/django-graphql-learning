@@ -84,16 +84,25 @@ Custom Error Messages
 """
 
 
-class BookAlreadyExistsError(graphene.Error):
+class BookAlreadyExistsError(GraphQLError):
     message = "A book with the same title already exists in the database."
 
+    def __init__(self, message):
+        super().__init__(message)
 
-class AuthorAlreadyExistsError(graphene.Error):
+
+class AuthorAlreadyExistsError(GraphQLError):
     message = "An author with the same name already exists in the database."
 
+    def __init__(self, message):
+        super().__init__(message)
 
-class PublisherAlreadyExistsError(graphene.Error):
+
+class PublisherAlreadyExistsError(GraphQLError):
     message = "A publisher with the same name already exists in the database."
+
+    def __init__(self, message):
+        super().__init__(message)
 
 
 """
@@ -115,19 +124,40 @@ class AuthorType(DjangoObjectType):
     class Meta:
         model = Author
 
+    @classmethod
+    def filter_author(cls, queryset, info, **kwargs):
+        firstName = kwargs.get("firstName")
+        lastName = kwargs.get("lastName")
+
+        if firstName:
+            queryset = queryset.filter(first_name__icontains=firstName)
+        if lastName:
+            queryset = queryset.filter(last_name__icontains=lastName)
+
+        return queryset
+
 
 class Query(graphene.ObjectType):
-    books = graphene.List(BookType)
-    publishers = graphene.List(PublisherType)
-    authors = graphene.List(AuthorType)
+    books = graphene.List(BookType, search=graphene.String())
+    publishers = graphene.List(PublisherType, search=graphene.String())
+    authors = graphene.List(AuthorType, search=graphene.String())
 
-    def resolve_books(self, info):
-        return Book.objects.all()
+    def resolve_books(self, info, search=None):
+        if search:
+            return Book.objects.filter(title__icontains=search)
+        else:
+            return Book.objects.all()
 
-    def resolve_publishers(self, info):
-        return Publisher.objects.all()
+    def resolve_publishers(self, info, search=None):
+        if search:
+            return Book.objects.filter(name__icontrains=search)
+        else:
+            return Publisher.objects.all()
 
-    def resolve_authors(self, info):
+    def resolve_authors(self, info, search=None, **kwargs):
+        queryset = Author.objects.all()
+        if search:
+            queryset = AuthorType.filter_author(queryset, search)
         return Author.objects.all()
 
 
@@ -153,7 +183,9 @@ class CreatePublisherMutation(graphene.Mutation):
         publisher_exists = Publisher.objects.filter(name=name).first()
 
         if publisher_exists:
-            raise PublisherAlreadyExistsError
+            raise PublisherAlreadyExistsError(
+                message="A publisher with the same name already exists in the database."
+            )
 
         publisher = Publisher.objects.create(
             name=name,
@@ -254,7 +286,9 @@ class CreateAuthorMutation(graphene.Mutation):
         ).first()
 
         if author_exists:
-            raise AuthorAlreadyExistsError
+            raise AuthorAlreadyExistsError(
+                message="An author with the same name already exists in the database."
+            )
 
         author = Author.objects.create(
             first_name=firstName, last_name=lastName, email=email
@@ -325,7 +359,9 @@ class CreateBookMutation(graphene.Mutation):
         book_exists = Book.objects.filter(title=title).first()
 
         if book_exists:
-            raise BookAlreadyExistsError
+            raise BookAlreadyExistsError(
+                message="A book with the same title already exists in the database."
+            )
 
         author = Author.objects.get(pk=authorID)
         publisher = Publisher.objects.get(pk=publisherID)
