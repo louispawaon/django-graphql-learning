@@ -79,6 +79,28 @@ class Email(graphene.Scalar):
         return isinstance(value, str) and Email.email_pattern.match(value)
 
 
+"""
+Custom Error Messages
+"""
+
+
+class BookAlreadyExistsError(graphene.Error):
+    message = "A book with the same title already exists in the database."
+
+
+class AuthorAlreadyExistsError(graphene.Error):
+    message = "An author with the same name already exists in the database."
+
+
+class PublisherAlreadyExistsError(graphene.Error):
+    message = "A publisher with the same name already exists in the database."
+
+
+"""
+DjangoObjectTypes
+"""
+
+
 class BookType(DjangoObjectType):
     class Meta:
         model = Book
@@ -126,6 +148,13 @@ class CreatePublisherMutation(graphene.Mutation):
     publisher = graphene.Field(PublisherType)
 
     def mutate(self, info, name, address, city, stateProvince, country, website):
+        # You can insert code logic if required (e.g. handling duplicate entries)
+
+        publisher_exists = Publisher.objects.filter(name=name).first()
+
+        if publisher_exists:
+            raise PublisherAlreadyExistsError
+
         publisher = Publisher.objects.create(
             name=name,
             address=address,
@@ -134,8 +163,6 @@ class CreatePublisherMutation(graphene.Mutation):
             country=country,
             website=website,
         )
-
-        # You can insert code logic if required (e.g. handling duplicate entries)
 
         publisher.save()
 
@@ -220,11 +247,18 @@ class CreateAuthorMutation(graphene.Mutation):
     author = graphene.Field(AuthorType)
 
     def mutate(self, info, firstName, lastName, email):
+        # You can insert code logic if required (e.g. handling duplicate entries)
+
+        author_exists = Author.objects.filter(
+            first_name=firstName, last_name=lastName
+        ).first()
+
+        if author_exists:
+            raise AuthorAlreadyExistsError
+
         author = Author.objects.create(
             first_name=firstName, last_name=lastName, email=email
         )
-
-        # You can insert code logic if required (e.g. handling duplicate entries)
 
         author.save()
         return CreateAuthorMutation(author=author)
@@ -286,6 +320,13 @@ class CreateBookMutation(graphene.Mutation):
     book = graphene.Field(BookType)
 
     def mutate(self, info, title, authorID, publisherID, publicationDate):
+        # You can insert code logic if required (e.g. handling duplicate entries)
+
+        book_exists = Book.objects.filter(title=title).first()
+
+        if book_exists:
+            raise BookAlreadyExistsError
+
         author = Author.objects.get(pk=authorID)
         publisher = Publisher.objects.get(pk=publisherID)
         book = Book.objects.create(
@@ -294,8 +335,6 @@ class CreateBookMutation(graphene.Mutation):
         )
         book.authors.add(author)
         book.publisher = publisher
-
-        # You can insert code logic if required (e.g. handling duplicate entries)
 
         book.save()
         return CreateBookMutation(book=book)
